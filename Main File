@@ -1,23 +1,47 @@
 class Main:
     def __init__(self):
-        self.menus = Menus()
+        self.menus = Menus(self)  # Pass reference of Main to Menus
         
     def start_game(self):
         self.menus.show_start_menu()
         
     def play(self):
-        pass
-                
+        # This will be your game loop eventually
+        print("The game has started!\n")
+        self.menus.show_action_menu()
+
+
 class Menus:
-    def __init__(self):
-        self.start_menu = StartMenu()
-        
+    def __init__(self, game):
+        self.game = game  # Reference to Main instance
+        # Pass self (Menus) to each menu so they can call each other
+        self.start_menu = StartMenu(self)
+        self.settings_menu = SettingsMenu(self)
+        self.load_game_menu = LoadGameMenu(self)
+        self.action_menu = ActionMenu(self)
+        self.pause_menu = PauseMenu(self)
+    
     def show_start_menu(self):
         self.start_menu.show()
 
-class StartMenu:    
+    def show_settings_menu(self):
+        self.settings_menu.show()
+
+    def show_load_game_menu(self):
+        self.load_game_menu.show()
+
+    def show_action_menu(self): 
+        self.action_menu.show()
+
+    def show_pause_menu(self):
+        self.pause_menu.show()
+
+
+class StartMenu:
+    def __init__(self, menus):
+        self.menus = menus  # Reference to Menus
+    
     def show(self):
-        #Display into to game and start menu
         print("Welcome to Gladiator Survival!")
         print("--------------------------------")
         print("Start Menu:")
@@ -26,29 +50,127 @@ class StartMenu:
         print("3. Settings")
         print("4. Exit")
         
-        # Get user choice
-        UserSelection = input("Choose a menu option: ")
+        user_selection = input("Choose a menu option: ")
         
-        if UserSelection == '1':
-            print("Starting game...")
-            
-        
-        elif UserSelection == '2':
-            print("Loading game...")
-
-        elif UserSelection == '3':
-            print("Openinig settings")
-                
-        elif UserSelection == '4':
-            print("Exiting game...")
-                
+        if user_selection == '1':
+            print("Starting game...\n")
+            self.menus.game.play()
+        elif user_selection == '2':
+            print("Loading game...\n")
+            self.menus.show_load_game_menu()
+        elif user_selection == '3':
+            print("Opening settings...\n")
+            self.menus.show_settings_menu()
+        elif user_selection == '4':
+            print("Exiting game...\n")
+            exit()
         else:
-            print("Invalid selection, please try again.")
+            print("Invalid selection, please try again.\n")
             self.show()
 
 
-            
+class SettingsMenu:
+    def __init__(self, menus):
+        self.menus = menus
+    
+    def show(self):
+        print("Settings Menu:")
+        print("1. Audio Settings")
+        print("2. Visual Settings")
+        print("3. Controls Settings")
+        print("4. Back to Start Menu")
+        choice = input("Choose an option: ")
+
+        if choice == '1':
+            print("Adjusting audio settings...\n")
+            self.show()
+        elif choice == '2':
+            print("Adjusting visual settings...\n")
+            self.show()
+        elif choice == '3':
+            print("Adjusting controls...\n")
+            self.show()
+        elif choice == '4':
+            print("Returning to Start Menu...\n")
+            self.menus.show_start_menu()
+        else:
+            print("Invalid selection. Try again.\n")
+            self.show()
+
+
+class LoadGameMenu:
+    def __init__(self, menus):
+        self.menus = menus
+    
+    def show(self):
+        print("Load Game Menu:\n")
+        print("Loading previous game...\n")
+        self.menus.game.play()  # After loading, go to play
+
+
+class ActionMenu:
+    def __init__(self, menus):
+        self.menus = menus
+
+    def show(self):
+        print("Action Menu:")
+        print("1. Attack")
+        print("2. Defend")
+        print("3. Use Item")
+        print("4. Flee")
+        print("5. View Stats")
+        print("6. Pause Game")
+        action_choice = input("Choose an action: ")
+
+        if action_choice == '1':
+            print("You choose to attack!\n")
+            self.show()
+        elif action_choice == '2':
+            print("You choose to defend!\n")
+            self.show()
+        elif action_choice == '3':
+            print("You choose to use an item!\n")
+            self.show()
+        elif action_choice == '4':
+            print("You choose to flee!\n")
+            self.menus.show_start_menu()
+        elif action_choice == '5':
+            print("Displaying stats...\n")
+            self.show()
+        elif action_choice == '6':
+            print("Pausing game...\n")
+            self.menus.show_pause_menu()
+        else:
+            print("Invalid action, please try again.\n")
+            self.show()
+
+
+class PauseMenu:
+    def __init__(self, menus):
+        self.menus = menus
+
+    def show(self):
+        print("Pause Menu:")
+        print("1. Resume Game")
+        print("2. Save Game")
+        print("3. Exit to Main Menu")
+        pause_choice = input("Choose an option: ")
+
+        if pause_choice == '1':
+            print("Resuming game...\n")
+            self.menus.show_action_menu()
+        elif pause_choice == '2':
+            print("Saving game...\n")
+            print("Game saved!\n")
+            self.show()
+        elif pause_choice == '3':
+            print("Exiting to Main Menu...\n")
+            self.menus.show_start_menu()
+        else:
+            print("Invalid selection, please try again.\n")
+            self.show()
+
+
 if __name__ == "__main__":
     game = Main()
     game.start_game()
-    
