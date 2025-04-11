@@ -1,26 +1,65 @@
+import time
+import random
+import pyttsx3
+
+# Start screen reader
+engine = pyttsx3.init()
+
+def speak(text):
+    print(text)
+    engine.say(text)
+    engine.runAndWait()
+
+FIRST_ARRAY = list(range(1, 6))
+SECOND_ARRAY = list(range(7, 12))
+THIRD_ARRAY = list(range(13, 18))
+FOURTH_ARRAY = list(range(19))
+
+room_descriptions = {
+    1: "room 1 description",
+    2: "room 2 description",
+    3: "room 3 description",
+    4: "room 4 description",
+    5: "room 5 description",
+    6: "room 6 description",
+    7: "room 7 description",
+    8: "room 8 description",
+    9: "room 9 description",
+    10: "room 10 description",
+    11: "room 11 description",
+    12: "room 12 description",
+    13: "room 13 description",
+    14: "room 14 description",
+    15: "room 15 description",
+    16: "room 16 description",
+    17: "room 17 description",
+    18: "room 18 description",
+    19: "Boss room description",
+}
+
+room_pools = [FIRST_ARRAY, SECOND_ARRAY, THIRD_ARRAY]
+
 class Main:
     def __init__(self):
-        self.menus = Menus(self)  # Pass reference of Main to Menus
-        
+        self.menus = Menus(self)
+
     def start_game(self):
         self.menus.show_start_menu()
-        
+
     def play(self):
-        # This will be your game loop eventually
         print("The game has started!\n")
         self.menus.show_action_menu()
 
 
 class Menus:
     def __init__(self, game):
-        self.game = game  # Reference to Main instance
-        # Pass self (Menus) to each menu so they can call each other
+        self.game = game
         self.start_menu = StartMenu(self)
         self.settings_menu = SettingsMenu(self)
         self.load_game_menu = LoadGameMenu(self)
         self.action_menu = ActionMenu(self)
         self.pause_menu = PauseMenu(self)
-    
+
     def show_start_menu(self):
         self.start_menu.show()
 
@@ -39,42 +78,65 @@ class Menus:
 
 class StartMenu:
     def __init__(self, menus):
-        self.menus = menus  # Reference to Menus
-    
+        self.menus = menus
+
     def show(self):
-        print("Welcome to Gladiator Survival!")
-        print("--------------------------------")
-        print("Start Menu:")
-        print("1. New Game")
-        print("2. Load Game")
-        print("3. Settings")
-        print("4. Exit")
-        
-        user_selection = input("Choose a menu option: ")
-        
+        speak("Welcome to Gladiator Survival!")
+        speak("Start Menu:")
+        speak("1. New Game")
+        speak("2. Load Game")
+        speak("3. Settings")
+        speak("4. Exit")
+
+        speak("Choose a menu option: ")
+        user_selection = ()
         if user_selection == '1':
-            print("Starting game...\n")
-            self.menus.game.play()
+            self.new_game()
         elif user_selection == '2':
-            print("Loading game...\n")
+            speak("Loading game...\n")
             self.menus.show_load_game_menu()
         elif user_selection == '3':
-            print("Opening settings...\n")
+            speak("Opening settings...\n")
             self.menus.show_settings_menu()
         elif user_selection == '4':
-            print("Exiting game...\n")
+            speak("Exiting game...\n")
             exit()
         else:
-            print("Invalid selection, please try again.\n")
+            speak("Invalid selection, please try again.\n")
             self.show()
+
+    def new_game(self):
+        speak("Starting new game...")
+        time.sleep(1)
+
+        for area_index, area_rooms in enumerate(room_pools):
+            speak(f"Entering Area {area_index + 1}")
+            print("------------------")
+
+            while area_rooms:
+                speak("Press Enter to enter the next room...")
+                input()
+                random_number = random.choice(area_rooms)
+                area_rooms.remove(random_number)
+
+                speak(f"Entering Room {random_number} in Area {area_index + 1}")
+                description = room_descriptions.get(random_number, "This room feels... strange.")
+                speak(description)
+                time.sleep(1)
+
+            speak(f"Area {area_index + 1} cleared!")
+            time.sleep(1)
+
+        speak("All areas cleared! You survived Gladiator Survival!")
+        self.menus.game.play()
 
 
 class SettingsMenu:
     def __init__(self, menus):
         self.menus = menus
-    
+
     def show(self):
-        print("Settings Menu:")
+        speak("Settings Menu:")
         print("1. Audio Settings")
         print("2. Visual Settings")
         print("3. Controls Settings")
@@ -82,30 +144,30 @@ class SettingsMenu:
         choice = input("Choose an option: ")
 
         if choice == '1':
-            print("Adjusting audio settings...\n")
+            speak("Adjusting audio settings...\n")
             self.show()
         elif choice == '2':
-            print("Adjusting visual settings...\n")
+            speak("Adjusting visual settings...\n")
             self.show()
         elif choice == '3':
-            print("Adjusting controls...\n")
+            speak("Adjusting controls...\n")
             self.show()
         elif choice == '4':
-            print("Returning to Start Menu...\n")
+            speak("Returning to Start Menu...\n")
             self.menus.show_start_menu()
         else:
-            print("Invalid selection. Try again.\n")
+            speak("Invalid selection. Try again.\n")
             self.show()
 
 
 class LoadGameMenu:
     def __init__(self, menus):
         self.menus = menus
-    
+
     def show(self):
-        print("Load Game Menu:\n")
-        print("Loading previous game...\n")
-        self.menus.game.play()  # After loading, go to play
+        speak("Load Game Menu:\n")
+        speak("Loading previous game...\n")
+        self.menus.game.play()
 
 
 class ActionMenu:
@@ -124,25 +186,21 @@ class ActionMenu:
 
         if action_choice == '1':
             print("You choose to attack!\n")
-            self.show()
         elif action_choice == '2':
             print("You choose to defend!\n")
-            self.show()
         elif action_choice == '3':
             print("You choose to use an item!\n")
-            self.show()
         elif action_choice == '4':
             print("You choose to flee!\n")
             self.menus.show_start_menu()
         elif action_choice == '5':
             print("Displaying stats...\n")
-            self.show()
         elif action_choice == '6':
             print("Pausing game...\n")
             self.menus.show_pause_menu()
         else:
             print("Invalid action, please try again.\n")
-            self.show()
+        self.show()
 
 
 class PauseMenu:
