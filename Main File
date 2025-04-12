@@ -226,6 +226,16 @@ class PauseMenu:
             print("Invalid selection, please try again.\n")
             self.show()
 
+    class Character:
+        def __init__(self, name):
+            self.name = name
+
+class Player(Character):
+    def __init__(self, name, attack_stat, defend_stat, speed_stat, hit_chance_stat, crit_rate_stat):
+        super().__init__(name)  # Call the constructor of the base class
+        self.attack_stat = attack_stat
+        self.defend_stat = defend_stat
+        self.speed_stat = speed_stat
 
 if __name__ == "__main__":
     game = Main()
