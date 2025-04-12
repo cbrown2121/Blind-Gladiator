@@ -1,41 +1,35 @@
 import time
 import random
 import pyttsx3
+import os
+
 
 # Start screen reader
 engine = pyttsx3.init()
 
+#Initialize the screen reader
 def speak(text):
     print(text)
     engine.say(text)
     engine.runAndWait()
 
+# Create arrays to hold the rooms in different areas
 FIRST_ARRAY = list(range(1, 6))
 SECOND_ARRAY = list(range(7, 12))
 THIRD_ARRAY = list(range(13, 18))
 FOURTH_ARRAY = list(range(19))
 
-room_descriptions = {
-    1: "room 1 description",
-    2: "room 2 description",
-    3: "room 3 description",
-    4: "room 4 description",
-    5: "room 5 description",
-    6: "room 6 description",
-    7: "room 7 description",
-    8: "room 8 description",
-    9: "room 9 description",
-    10: "room 10 description",
-    11: "room 11 description",
-    12: "room 12 description",
-    13: "room 13 description",
-    14: "room 14 description",
-    15: "room 15 description",
-    16: "room 16 description",
-    17: "room 17 description",
-    18: "room 18 description",
-    19: "Boss room description",
-}
+# Load room descriptions from text files
+# To properly load room descriptions, change the "base_path" to the path where the room description files are stored on your pc
+def load_room_description(room_number):
+    base_path = r"C:\Users\brown\OneDrive\Documents\Education\Oakland University\Winter 2025\CSI - 3370\Echos of the Colosseum\room_descriptions"
+    filename = os.path.join(base_path, f"room {room_number}.txt")
+
+    if os.path.exists(filename):
+        with open(filename, 'r', encoding='utf-8') as file:
+            return file.read().strip()
+    else:
+        return "This room feels... strange."
 
 room_pools = [FIRST_ARRAY, SECOND_ARRAY, THIRD_ARRAY]
 
@@ -80,6 +74,7 @@ class StartMenu:
     def __init__(self, menus):
         self.menus = menus
 
+# Display start menu and get user input
     def show(self):
         speak("Welcome to Gladiator Survival!")
         speak("Start Menu:")
@@ -89,7 +84,8 @@ class StartMenu:
         speak("4. Exit")
 
         speak("Choose a menu option: ")
-        user_selection = ()
+        user_selection = input()
+        
         if user_selection == '1':
             self.new_game()
         elif user_selection == '2':
@@ -109,6 +105,7 @@ class StartMenu:
         speak("Starting new game...")
         time.sleep(1)
 
+        # Select a random room from the room pool. Start with area 1, then area 2, and 3
         for area_index, area_rooms in enumerate(room_pools):
             speak(f"Entering Area {area_index + 1}")
             print("------------------")
@@ -120,13 +117,14 @@ class StartMenu:
                 area_rooms.remove(random_number)
 
                 speak(f"Entering Room {random_number} in Area {area_index + 1}")
-                description = room_descriptions.get(random_number, "This room feels... strange.")
+                description = load_room_description(random_number)
                 speak(description)
                 time.sleep(1)
 
             speak(f"Area {area_index + 1} cleared!")
             time.sleep(1)
 
+        # All rooms have been cleared and the game in complete
         speak("All areas cleared! You survived Gladiator Survival!")
         self.menus.game.play()
 
