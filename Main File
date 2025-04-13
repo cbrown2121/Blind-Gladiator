@@ -236,6 +236,16 @@ class Player(Character):
         self.attack_stat = attack_stat
         self.defend_stat = defend_stat
         self.speed_stat = speed_stat
+        self.hit_chance_stat = hit_chance_stat
+        self.crit_rate_stat = crit_rate_stat
+
+     def display_stats(self):
+        print(f"Player: {self.name}")
+        print(f"Attack: {self.attack_stat}")
+        print(f"Defense: {self.defend_stat}")
+        print(f"Speed: {self.speed_stat}")
+        print(f"Hit Chance: {self.hit_chance_stat}")
+        print(f"Critical Rate: {self.crit_rate_stat}")
 
 if __name__ == "__main__":
     game = Main()
