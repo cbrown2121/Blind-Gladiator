@@ -226,7 +226,7 @@ class PauseMenu:
             print("Invalid selection, please try again.\n")
             self.show()
 
-    class Character:
+class Character:
         def __init__(self, name):
             self.name = name
 
