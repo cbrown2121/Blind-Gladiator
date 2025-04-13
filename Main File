@@ -73,6 +73,40 @@ class Menus:
 class StartMenu:
     def __init__(self, menus):
         self.menus = menus
+    def combat(self, enemy):
+
+        speak(f"A wild {enemy.name} appears!")
+    
+        player_health = 100  # Placeholder for now
+        enemy_health = enemy.health
+
+        while player_health > 0 and enemy_health > 0:
+            speak("Your move: 1. Attack 2. Defend")
+            choice = input()
+
+            if choice == '1':
+                damage = random.randint(5, 15)
+                enemy_health -= damage
+                speak(f"You strike the {enemy.name} for {damage} damage!")
+            elif choice == '2':
+                speak("You brace for the attack.")
+                continue
+            else:
+                speak("Invalid choice.")
+                continue
+
+            if enemy_health <= 0:
+                speak(f"The {enemy.name} has been defeated!")
+                return  # Exit combat
+
+            enemy_damage = random.randint(5, enemy.attack_stat)
+            player_health -= enemy_damage
+            speak(f"The {enemy.name} strikes you for {enemy_damage} damage!")
+
+            if player_health <= 0:
+                speak("You have been defeated!")
+                self.show_start_menu()  # Go back to start menu
+                return
 
 # Display start menu and get user input
     def show(self):
@@ -121,14 +155,19 @@ class StartMenu:
                 speak(description)
                 time.sleep(1)
 
+                encounter_chance = random.randint(1, 100)
+                if encounter_chance <= 60:  # 60% chance to encounter an enemy
+                    enemy = Character("Gladiator")
+                    self.combat(enemy)
+                else:
+                    speak("The room is quiet... for now.")
             speak(f"Area {area_index + 1} cleared!")
             time.sleep(1)
 
         # All rooms have been cleared and the game in complete
         speak("All areas cleared! You survived Gladiator Survival!")
         self.menus.game.play()
-
-
+    
 class SettingsMenu:
     def __init__(self, menus):
         self.menus = menus
@@ -227,8 +266,10 @@ class PauseMenu:
             self.show()
 
 class Character:
-        def __init__(self, name):
+        def __init__(self, name, health = 100, attack_stat = 10):
             self.name = name
+            self.health = health
+            self.attack_stat = attack_stat
 
 class Player(Character):
     def __init__(self, name, attack_stat, defend_stat, speed_stat, hit_chance_stat, crit_rate_stat):
@@ -239,7 +280,7 @@ class Player(Character):
         self.hit_chance_stat = hit_chance_stat
         self.crit_rate_stat = crit_rate_stat
 
-     def display_stats(self):
+    def display_stats(self):
         print(f"Player: {self.name}")
         print(f"Attack: {self.attack_stat}")
         print(f"Defense: {self.defend_stat}")
