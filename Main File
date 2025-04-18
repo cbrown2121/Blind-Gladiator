@@ -270,6 +270,11 @@ class Character:
             self.name = name
             self.health = health
             self.attack_stat = attack_stat
+            self.defend_stat = defend_stat
+            self.speed_stat = speed_stat
+            self.hit_chance_stat = hit_chance_stat
+            self.crit_rate_stat = crit_rate_stat
+
 
 class Player(Character):
     def __init__(self, name, attack_stat, defend_stat, speed_stat, hit_chance_stat, crit_rate_stat):
