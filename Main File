@@ -275,6 +275,10 @@ class Character:
             self.hit_chance_stat = hit_chance_stat
             self.crit_rate_stat = crit_rate_stat
 
+         def __str__(self):
+        return (f"Character: {self.name}, Health: {self.health}, Attack: {self.attack_stat}, "
+                f"Defense: {self.defend_stat}, Speed: {self.speed_stat}, "
+                f"Hit Chance: {self.hit_chance_stat}%, Critical Rate: {self.crit_rate_stat}%")
 
 class Player(Character):
     def __init__(self, name, attack_stat, defend_stat, speed_stat, hit_chance_stat, crit_rate_stat):
