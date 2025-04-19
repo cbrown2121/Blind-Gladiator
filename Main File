@@ -280,6 +280,65 @@ class Character:
                 f"Defense: {self.defend_stat}, Speed: {self.speed_stat}, "
                 f"Hit Chance: {self.hit_chance_stat}%, Critical Rate: {self.crit_rate_stat}%")
 
+class Ally_NPC(NPC):
+    def __init__(self, name, health=100, attack_stat=10, defend_stat=5, speed_stat=5, hit_chance_stat=75, crit_rate_stat=5, is_friendly=True):
+        super().__init__(name, health, attack_stat, defend_stat, speed_stat, hit_chance_stat, crit_rate_stat, is_friendly)
+
+    def Heal(self, target):
+        if isinstance(target, Character):
+            heal_amount = 20  # Example heal amount
+            target.health += heal_amount
+            print(f"{self.name} heals {target.name} for {heal_amount} health. {target.name}'s health is now {target.health}.")
+
+    def HelpFight(self, target):
+        if isinstance(target, Character):
+            damage = self.attack_stat // 2  # Example damage dealt in help
+            target.health -= damage
+            print(f"{self.name} helps {target.name} in the fight, dealing {damage} damage.")
+
+    def GiveItem(self, item):
+        print(f"{self.name} gives you a {item}.")
+
+# Example of creating an Ally_NPC
+ally_npc = Ally_NPC(name="Healer", health=100, attack_stat=5, defend_stat=3, speed_stat=4, hit_chance_stat=70, crit_rate_stat=2)
+
+# Example of creating a Character to interact with
+character = Character(name="Warrior", health=80)
+
+# Using the Ally_NPC methods
+ally_npc.Heal(character)
+ally_npc.HelpFight(character)
+ally_npc.GiveItem("Health Potion")
+
+class Enemy_NPC(NPC):
+    def __init__(self, name, health=100, attack_stat=10, defend_stat=5, speed_stat=5, hit_chance_stat=75, crit_rate_stat=5, is_friendly=False):
+        super().__init__(name, health, attack_stat, defend_stat, speed_stat, hit_chance_stat, crit_rate_stat, is_friendly)
+
+    def FW_Enemy(self):
+        print(f"{self.name} is a Fast Warrior enemy! It attacks quickly!")
+
+    def SST_Enemy(self):
+        print(f"{self.name} is a Stealthy Scout enemy! It can evade attacks!")
+
+    def Bal_Enemy(self):
+        print(f"{self.name} is a Balanced enemy! It has a mix of offense and defense!")
+
+    def Boss_Enemy(self):
+        print(f"{self.name} is a Boss enemy! It has high health and powerful attacks!")
+
+    def ItemDrop(self):
+        items = ["Gold Coin", "Health Potion", "Mana Potion", "Rare Gem"]
+        dropped_item = random.choice(items)
+        print(f"{self.name} dropped a {dropped_item}!")
+
+# Example of creating an Enemy_NPC
+import random
+
+enemy1 = Enemy_NPC(name="Goblin", health=50, attack_stat=8, defend_stat=3, speed_stat=6)
+enemy2 = Enemy_NPC(name="Orc", health=100, attack_stat=15, defend_stat=5, speed_stat=4)
+enemy3 = Enemy_NPC(name="Dragon", health=200, attack_stat=25, defend_stat=10)
+
+
 class Player(Character):
     def __init__(self, name, attack_stat, defend_stat, speed_stat, hit_chance_stat, crit_rate_stat):
         super().__init__(name)  # Call the constructor of the base class
