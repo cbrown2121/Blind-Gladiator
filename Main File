@@ -2,25 +2,211 @@ import time
 import random
 import pyttsx3
 import os
+import pygame
+
+# Initialize pygame mixer
+pygame.mixer.init()
+
+# Start and stop music functions
+def play_music(filename, loop=True):
+    pygame.mixer.music.load(filename)
+    pygame.mixer.music.play(-1 if loop else 0)
+
+def stop_music():
+    pygame.mixer.music.stop()
+
+def fade_music(ms=1500):
+    pygame.mixer.music.fadeout(ms)
 
 
 # Start screen reader
 engine = pyttsx3.init()
 
-#Initialize the screen reader
+# Screen reader helper
 def speak(text):
     print(text)
     engine.say(text)
     engine.runAndWait()
 
-# Create arrays to hold the rooms in different areas
-FIRST_ARRAY = list(range(1, 6))
-SECOND_ARRAY = list(range(7, 12))
-THIRD_ARRAY = list(range(13, 18))
-FOURTH_ARRAY = list(range(19))
+# Stores items held in players inventory
+class Item:
+    def __init__(self, name, effect_type, amount):
+        self.name = name
+        self.effect_type = effect_type
+        self.amount = amount
 
-# Load room descriptions from text files
-# To properly load room descriptions, change the "base_path" to the path where the room description files are stored on your pc
+    def use(self, target):
+        # Heal potion
+        if self.effect_type == "heal":
+            target.health += self.amount
+            if target.health > target.max_health:
+                target.health = target.max_health
+            speak(f"{target.name} healed for {self.amount} HP.")
+
+# Character Classes
+class Character:
+    
+    # Define playable character stats
+    def __init__(self, name, health=100, attack_stat=10, defend_stat=5, speed_stat=5, hit_chance_stat=75, crit_rate_stat=5):
+        self.name = name
+        self.health = health
+        self.attack_stat = attack_stat
+        self.defend_stat = defend_stat
+        self.speed_stat = speed_stat
+        self.hit_chance_stat = hit_chance_stat
+        self.crit_rate_stat = crit_rate_stat
+
+class NPC(Character):
+    # Define NPC stats
+    def __init__(self, name, health=100, attack_stat=10, defend_stat=5, speed_stat=5, hit_chance_stat=75, crit_rate_stat=5, is_friendly=True):
+        super().__init__(name, health, attack_stat, defend_stat, speed_stat, hit_chance_stat, crit_rate_stat)
+        self.is_friendly = is_friendly
+
+class Ally_NPC(NPC):
+    # Ally capabilities
+    # Healing
+    def Heal(self, target):
+        if isinstance(target, Character):
+            heal_amount = 20
+            target.health += heal_amount
+            speak(f"{self.name} heals {target.name} for {heal_amount}. Current HP: {target.health}")
+
+    # Assist in fighting enemies
+    def HelpFight(self, target):
+        if isinstance(target, Character):
+            damage = self.attack_stat // 2
+            target.health -= damage
+            speak(f"{self.name} helps by attacking {target.name} for {damage} damage.")
+
+    # Give playable character an item
+    def GiveItem(self, item):
+        speak(f"{self.name} gives you a {item}.")
+
+class Enemy_NPC(NPC):
+    def ItemDrop(self):
+        items = [
+            Item("Gold Coin", "gold", 0),  # Future expansion
+            Item("Health Potion", "heal", 30),
+            Item("Rare Gem", "gold", 0)
+        ]
+        dropped_item = random.choice(items)
+        speak(f"{self.name} dropped a {dropped_item.name}!")
+        return dropped_item
+
+class Boss_NPC(Enemy_NPC):
+    def __init__(self):
+        super().__init__(
+            name="Dragon",
+            health=300,
+            attack_stat=30,
+            defend_stat=12,
+            speed_stat=8,
+            hit_chance_stat=95,
+            crit_rate_stat=15,
+            is_friendly=False
+        )
+
+
+class Player(Character):
+    def __init__(self, name, attack_stat, defend_stat, speed_stat, hit_chance_stat, crit_rate_stat, health=100):
+        super().__init__(name, health, attack_stat, defend_stat, speed_stat, hit_chance_stat, crit_rate_stat)
+        self.max_health = health
+        self.inventory = [
+            Item("Small Healing Potion", "heal", 20),
+            Item("Large Healing Potion", "heal", 50)
+        ]
+
+    def display_stats(self):
+        speak(f"\nPlayer: {self.name}")
+        speak(f"HP: {self.health} / {self.max_health}")
+        speak(f"Attack: {self.attack_stat}")
+        speak(f"Defense: {self.defend_stat}")
+        speak(f"Speed: {self.speed_stat}")
+        speak(f"Hit Chance: {self.hit_chance_stat}%")
+        speak(f"Critical Rate: {self.crit_rate_stat}%")
+        print()
+
+
+# Combat System
+def combat(player: Player, enemy: Enemy_NPC):
+    speak(f"A wild {enemy.name} appears!")
+
+    fade_music()  # gracefully end main music
+    play_music("C:/Users/brown/OneDrive/Documents/Education/Oakland University/Winter 2025/CSI - 3370/Echos of the Colosseum/Music/combat_music.mp3")
+    pygame.mixer.music.set_volume(0.4)
+    while player.health > 0 and enemy.health > 0:
+        speak(f"\nYour HP: {player.health} | {enemy.name}'s HP: {enemy.health}")
+        speak("Your move: 1. Attack  2. Defend  3. Use Item")
+        choice = input("Choose an action: ")
+
+        # Attack enemy
+        if choice == '1':
+            damage = max(1, player.attack_stat - enemy.defend_stat)
+            enemy.health -= damage
+            speak(f"You strike the {enemy.name} for {damage} damage!")
+        # Defend against enemy attack
+        elif choice == '2':
+            speak("You brace for the attack.")
+            player.defend_stat *= 2
+        # Use an item
+        elif choice == '3':
+            if not player.inventory:
+                speak("You have no items left!")
+            else:
+                print("Inventory:")
+                for i, item in enumerate(player.inventory, 1):
+                    print(f"{i}. {item.name} ({item.effect_type} {item.amount})")
+                index = input("Choose an item number: ")
+                if index.isdigit() and 1 <= int(index) <= len(player.inventory):
+                    item = player.inventory.pop(int(index) - 1)
+                    item.use(player)
+                else:
+                    speak("Invalid selection.")
+                    continue
+                
+        elif choice == '9':
+            damage = 999
+            enemy.health -=damage
+            speak(f"You strike the {enemy.name} for {damage} damage!")
+        else:
+            print("Invalid action.")
+            continue
+
+        if enemy.health <= 0:
+            speak(f"You defeated the {enemy.name}!")
+            dropped_item = enemy.ItemDrop()
+            player.inventory.append(dropped_item)
+            speak(f"{dropped_item.name} added to your inventory.")
+
+            fade_music()
+            play_music("C:/Users/brown/OneDrive/Documents/Education/Oakland University/Winter 2025/CSI - 3370/Echos of the Colosseum/Music/main_music.mp3")
+            pygame.mixer.music.set_volume(0.4)
+
+            return
+
+        # Enemy Turn
+        damage = max(1, enemy.attack_stat - player.defend_stat)
+        player.health -= damage
+        speak(f"The {enemy.name} strikes you for {damage} damage!")
+
+        if choice == '2':
+            player.defend_stat //= 2
+
+        if player.health <= 0:
+            speak("You have been defeated!")
+            return
+
+
+# Room System & File Loading
+FIRST_ARRAY = list(range(1, 4))
+SECOND_ARRAY = list(range(5, 10))
+THIRD_ARRAY = list(range(11, 14))
+FOURTH_ARRAY = list(range(15))
+FIFTH_ARRAY = list(range(16))
+
+room_pools = [FIRST_ARRAY, SECOND_ARRAY, THIRD_ARRAY, FOURTH_ARRAY, FIFTH_ARRAY]
+
+
 def load_room_description(room_number):
     base_path = r"C:\Users\brown\OneDrive\Documents\Education\Oakland University\Winter 2025\CSI - 3370\Echos of the Colosseum\room_descriptions"
     filename = os.path.join(base_path, f"room {room_number}.txt")
@@ -31,17 +217,27 @@ def load_room_description(room_number):
     else:
         return "This room feels... strange."
 
-room_pools = [FIRST_ARRAY, SECOND_ARRAY, THIRD_ARRAY]
+def combatspawn():
+    enemies = [
+        Enemy_NPC(name="Goblin", health=50, attack_stat=8, defend_stat=3, speed_stat=6),
+        Enemy_NPC(name="Orc", health=100, attack_stat=15, defend_stat=5, speed_stat=4),
+        Enemy_NPC(name="Arena Gladiator", health=60, attack_stat=10, defend_stat=5, speed_stat=4)
+    ]
+    selected_enemy = random.choice(enemies)
+    return selected_enemy
 
+
+# Menus and Game Loop
 class Main:
     def __init__(self):
+        self.player = Player(name="Hero", attack_stat=15, defend_stat=8, speed_stat=10, hit_chance_stat=90, crit_rate_stat=10)
         self.menus = Menus(self)
 
     def start_game(self):
         self.menus.show_start_menu()
 
     def play(self):
-        print("The game has started!\n")
+        speak("The game has started!")
         self.menus.show_action_menu()
 
 
@@ -73,288 +269,181 @@ class Menus:
 class StartMenu:
     def __init__(self, menus):
         self.menus = menus
-    def combat(self, enemy):
 
-        speak(f"A wild {enemy.name} appears!")
     
-        player_health = 100  # Placeholder for now
-        enemy_health = enemy.health
-
-        while player_health > 0 and enemy_health > 0:
-            speak("Your move: 1. Attack 2. Defend")
-            choice = input()
-
-            if choice == '1':
-                damage = random.randint(5, 15)
-                enemy_health -= damage
-                speak(f"You strike the {enemy.name} for {damage} damage!")
-            elif choice == '2':
-                speak("You brace for the attack.")
-                continue
-            else:
-                speak("Invalid choice.")
-                continue
-
-            if enemy_health <= 0:
-                speak(f"The {enemy.name} has been defeated!")
-                return  # Exit combat
-
-            enemy_damage = random.randint(5, enemy.attack_stat)
-            player_health -= enemy_damage
-            speak(f"The {enemy.name} strikes you for {enemy_damage} damage!")
-
-            if player_health <= 0:
-                speak("You have been defeated!")
-                self.show_start_menu()  # Go back to start menu
-                return
-
-# Display start menu and get user input
     def show(self):
-        speak("Welcome to Gladiator Survival!")
-        speak("Start Menu:")
+        speak("Welcome to Echoes of the Colosseum!")
+        print("---------------------------------")
+        speak("Choose a menu option:")
         speak("1. New Game")
         speak("2. Load Game")
         speak("3. Settings")
         speak("4. Exit")
-
-        speak("Choose a menu option: ")
-        user_selection = input()
+        print()
+        user_selection = input("Choose an option: ")
         
         if user_selection == '1':
             self.new_game()
         elif user_selection == '2':
-            speak("Loading game...\n")
             self.menus.show_load_game_menu()
         elif user_selection == '3':
-            speak("Opening settings...\n")
             self.menus.show_settings_menu()
         elif user_selection == '4':
-            speak("Exiting game...\n")
+            speak("Exiting game...")
             exit()
         else:
-            speak("Invalid selection, please try again.\n")
+            print("Invalid selection.")
             self.show()
 
     def new_game(self):
         speak("Starting new game...")
+        play_music("C:/Users/brown/OneDrive/Documents/Education/Oakland University/Winter 2025/CSI - 3370/Echos of the Colosseum/Music/main_music.mp3")
+        pygame.mixer.music.set_volume(0.4)
         time.sleep(1)
 
-        # Select a random room from the room pool. Start with area 1, then area 2, and 3
+        # Randomly shuffle through the rooms, depending on area
         for area_index, area_rooms in enumerate(room_pools):
             speak(f"Entering Area {area_index + 1}")
-            print("------------------")
+            random.shuffle(area_rooms)
 
-            while area_rooms:
-                speak("Press Enter to enter the next room...")
-                input()
-                random_number = random.choice(area_rooms)
-                area_rooms.remove(random_number)
+            #Remove rooms from pool after visiting, preventing visiting the same room twice
+            current_index = 0
+            visited = set()
 
-                speak(f"Entering Room {random_number} in Area {area_index + 1}")
-                description = load_room_description(random_number)
-                speak(description)
-                time.sleep(1)
+            while current_index < len(area_rooms):
+                room_number = area_rooms[current_index]
 
-                encounter_chance = random.randint(1, 100)
-                if encounter_chance <= 60:  # 60% chance to encounter an enemy
-                    enemy = Character("Gladiator")
-                    self.combat(enemy)
+                if room_number not in visited:
+                    description = load_room_description(room_number)
+                    print(f"Entering Room {room_number}")
+                    speak(description)
+
+                    # Boss fight trigger (Room 16)
+                    if room_number == 16:
+                        fade_music()
+                        play_music("C:/Users/brown/OneDrive/Documents/Education/Oakland University/Winter 2025/CSI - 3370/Echos of the Colosseum/Music/combat_music.mp3")
+                        pygame.mixer.music.set_volume(0.4)
+                        
+                        speak("A powerful presence fills the room... prepare yourself.")
+                        boss = Boss_NPC()
+                        combat(self.menus.game.player, boss)
+
+                        speak("You have defeated the Colosseum Champion!")
+                        speak("You survived Echos of the Colosseum and earned your freedom.")
+                        
+                        fade_music()
+                        play_music("C:/Users/brown/OneDrive/Documents/Education/Oakland University/Winter 2025/CSI - 3370/Echos of the Colosseum/Music/main_music.mp3")
+                        pygame.mixer.music.set_volume(0.4)
+
+                        self.menus.show_start_menu()
+                        return
+
+                    visited.add(room_number)
                 else:
-                    speak("The room is quiet... for now.")
+                    speak(f"Returning to Room {room_number}")
+                    speak("It feels familiar...")
+
+                speak("Press W to go forward, S to go back, or A for action menu.")
+                action = input("Your action: ").lower()
+                if action == 'w':
+                    confirm = input("Press W again to confirm: ").lower()
+                    if confirm == 'w':
+                        current_index += 1
+                        if random.randint(1, 100) <= 60:
+                            enemy = combatspawn()
+                            combat(self.menus.game.player, enemy)
+                    else:
+                        speak("Action cancelled.")
+                elif action == 's':
+                    confirm = input("Press S again to confirm: ").lower()
+                    if confirm == 's':
+                        if current_index > 0:
+                            current_index -= 1
+                        else:
+                            speak("You're already at the beginning.")
+                            
+                elif action == 'a':
+                    self.menus.show_action_menu()
+
+                else:
+                    speak("Action cancelled.")
+            else:
+                print("Invalid input.")
+
             speak(f"Area {area_index + 1} cleared!")
             time.sleep(1)
 
-        # All rooms have been cleared and the game in complete
-        speak("All areas cleared! You survived Gladiator Survival!")
+        speak("All areas cleared! You survived Echoes of the Colosseum!")
         self.menus.game.play()
-    
+
 class SettingsMenu:
     def __init__(self, menus):
         self.menus = menus
 
     def show(self):
-        speak("Settings Menu:")
-        print("1. Audio Settings")
-        print("2. Visual Settings")
-        print("3. Controls Settings")
-        print("4. Back to Start Menu")
-        choice = input("Choose an option: ")
-
-        if choice == '1':
-            speak("Adjusting audio settings...\n")
-            self.show()
-        elif choice == '2':
-            speak("Adjusting visual settings...\n")
-            self.show()
-        elif choice == '3':
-            speak("Adjusting controls...\n")
-            self.show()
-        elif choice == '4':
-            speak("Returning to Start Menu...\n")
-            self.menus.show_start_menu()
-        else:
-            speak("Invalid selection. Try again.\n")
-            self.show()
-
+        speak("Settings Menu: (Not yet implemented)")
+        self.menus.show_start_menu()
 
 class LoadGameMenu:
     def __init__(self, menus):
         self.menus = menus
 
     def show(self):
-        speak("Load Game Menu:\n")
-        speak("Loading previous game...\n")
+        speak("Loading game...")
         self.menus.game.play()
-
 
 class ActionMenu:
     def __init__(self, menus):
         self.menus = menus
 
     def show(self):
-        print("Action Menu:")
-        print("1. Attack")
-        print("2. Defend")
-        print("3. Use Item")
-        print("4. Flee")
-        print("5. View Stats")
-        print("6. Pause Game")
-        action_choice = input("Choose an action: ")
+        speak("Action Menu:")
+        print("--------------------")
+        speak("1. View Stats")
+        speak("2. Use item")
+        speak("3. Return to game")
+        print()
+        choice = input("Choose an action: ")
 
-        if action_choice == '1':
-            print("You choose to attack!\n")
-        elif action_choice == '2':
-            print("You choose to defend!\n")
-        elif action_choice == '3':
-            print("You choose to use an item!\n")
-        elif action_choice == '4':
-            print("You choose to flee!\n")
-            self.menus.show_start_menu()
-        elif action_choice == '5':
-            print("Displaying stats...\n")
-        elif action_choice == '6':
-            print("Pausing game...\n")
-            self.menus.show_pause_menu()
+        if choice == '1':
+            self.menus.game.player.display_stats()
+
+        elif choice == '2':
+            if not self.menus.game.player.inventory:
+                speak("You have no items.")
+            else:
+                speak("Inventory:")
+                for idx, item in enumerate(self.menus.game.player.inventory, 1):
+                    speak(f"{idx}. {item.name}")
+                item_choice = input("Choose item number to use: ")
+                if item_choice.isdigit() and 1 <= int(item_choice) <= len(self.menus.game.player.inventory):
+                    item = self.menus.game.player.inventory.pop(int(item_choice) - 1)
+                    item.use(self.menus.game.player)
+
+        elif choice == '3':
+            return  # Exit the action menu and resume the game
+
         else:
-            print("Invalid action, please try again.\n")
-        self.show()
+            print("Invalid selection.")
 
+        self.show()  # Loop back for next action
 
 class PauseMenu:
     def __init__(self, menus):
         self.menus = menus
 
     def show(self):
-        print("Pause Menu:")
-        print("1. Resume Game")
-        print("2. Save Game")
-        print("3. Exit to Main Menu")
-        pause_choice = input("Choose an option: ")
-
-        if pause_choice == '1':
-            print("Resuming game...\n")
+        speak("Pause Menu: 1. Resume  2. Exit to Main Menu")
+        choice = input("Choose: ")
+        if choice == '1':
             self.menus.show_action_menu()
-        elif pause_choice == '2':
-            print("Saving game...\n")
-            print("Game saved!\n")
-            self.show()
-        elif pause_choice == '3':
-            print("Exiting to Main Menu...\n")
+        elif choice == '2':
             self.menus.show_start_menu()
         else:
-            print("Invalid selection, please try again.\n")
+            print("Invalid choice.")
             self.show()
 
-class Character:
-        def __init__(self, name, health = 100, attack_stat = 10):
-            self.name = name
-            self.health = health
-            self.attack_stat = attack_stat
-            self.defend_stat = defend_stat
-            self.speed_stat = speed_stat
-            self.hit_chance_stat = hit_chance_stat
-            self.crit_rate_stat = crit_rate_stat
-
-         def __str__(self):
-        return (f"Character: {self.name}, Health: {self.health}, Attack: {self.attack_stat}, "
-                f"Defense: {self.defend_stat}, Speed: {self.speed_stat}, "
-                f"Hit Chance: {self.hit_chance_stat}%, Critical Rate: {self.crit_rate_stat}%")
-
-class Ally_NPC(NPC):
-    def __init__(self, name, health=100, attack_stat=10, defend_stat=5, speed_stat=5, hit_chance_stat=75, crit_rate_stat=5, is_friendly=True):
-        super().__init__(name, health, attack_stat, defend_stat, speed_stat, hit_chance_stat, crit_rate_stat, is_friendly)
-
-    def Heal(self, target):
-        if isinstance(target, Character):
-            heal_amount = 20  # Example heal amount
-            target.health += heal_amount
-            print(f"{self.name} heals {target.name} for {heal_amount} health. {target.name}'s health is now {target.health}.")
-
-    def HelpFight(self, target):
-        if isinstance(target, Character):
-            damage = self.attack_stat // 2  # Example damage dealt in help
-            target.health -= damage
-            print(f"{self.name} helps {target.name} in the fight, dealing {damage} damage.")
-
-    def GiveItem(self, item):
-        print(f"{self.name} gives you a {item}.")
-
-# Example of creating an Ally_NPC
-ally_npc = Ally_NPC(name="Healer", health=100, attack_stat=5, defend_stat=3, speed_stat=4, hit_chance_stat=70, crit_rate_stat=2)
-
-# Example of creating a Character to interact with
-character = Character(name="Warrior", health=80)
-
-# Using the Ally_NPC methods
-ally_npc.Heal(character)
-ally_npc.HelpFight(character)
-ally_npc.GiveItem("Health Potion")
-
-class Enemy_NPC(NPC):
-    def __init__(self, name, health=100, attack_stat=10, defend_stat=5, speed_stat=5, hit_chance_stat=75, crit_rate_stat=5, is_friendly=False):
-        super().__init__(name, health, attack_stat, defend_stat, speed_stat, hit_chance_stat, crit_rate_stat, is_friendly)
-
-    def FW_Enemy(self):
-        print(f"{self.name} is a Fast Warrior enemy! It attacks quickly!")
-
-    def SST_Enemy(self):
-        print(f"{self.name} is a Stealthy Scout enemy! It can evade attacks!")
-
-    def Bal_Enemy(self):
-        print(f"{self.name} is a Balanced enemy! It has a mix of offense and defense!")
-
-    def Boss_Enemy(self):
-        print(f"{self.name} is a Boss enemy! It has high health and powerful attacks!")
-
-    def ItemDrop(self):
-        items = ["Gold Coin", "Health Potion", "Mana Potion", "Rare Gem"]
-        dropped_item = random.choice(items)
-        print(f"{self.name} dropped a {dropped_item}!")
-
-# Example of creating an Enemy_NPC
-import random
-
-enemy1 = Enemy_NPC(name="Goblin", health=50, attack_stat=8, defend_stat=3, speed_stat=6)
-enemy2 = Enemy_NPC(name="Orc", health=100, attack_stat=15, defend_stat=5, speed_stat=4)
-enemy3 = Enemy_NPC(name="Dragon", health=200, attack_stat=25, defend_stat=10)
-
-
-class Player(Character):
-    def __init__(self, name, attack_stat, defend_stat, speed_stat, hit_chance_stat, crit_rate_stat):
-        super().__init__(name)  # Call the constructor of the base class
-        self.attack_stat = attack_stat
-        self.defend_stat = defend_stat
-        self.speed_stat = speed_stat
-        self.hit_chance_stat = hit_chance_stat
-        self.crit_rate_stat = crit_rate_stat
-
-    def display_stats(self):
-        print(f"Player: {self.name}")
-        print(f"Attack: {self.attack_stat}")
-        print(f"Defense: {self.defend_stat}")
-        print(f"Speed: {self.speed_stat}")
-        print(f"Hit Chance: {self.hit_chance_stat}")
-        print(f"Critical Rate: {self.crit_rate_stat}")
+# Start the game
 
 if __name__ == "__main__":
     game = Main()
