@@ -201,12 +201,20 @@ def combat(player: Player, enemy: Enemy_NPC):
 FIRST_ARRAY = list(range(1, 4))
 SECOND_ARRAY = list(range(5, 10))
 THIRD_ARRAY = list(range(11, 14))
-FOURTH_ARRAY = list(range(15))
-FIFTH_ARRAY = list(range(16))
+FOURTH_ARRAY = [15]
+FIFTH_ARRAY = [16]
 
 room_pools = [FIRST_ARRAY, SECOND_ARRAY, THIRD_ARRAY, FOURTH_ARRAY, FIFTH_ARRAY]
 
+# Loads intro and outro
+def load_text_file(filename):
+    try:
+        with open(filename, 'r', encoding='utf-8') as file:
+            return file.read().strip()
+    except FileNotFoundError:
+        return "The text file could not be found."
 
+# Loads room descriptions
 def load_room_description(room_number):
     base_path = r"C:\Users\brown\OneDrive\Documents\Education\Oakland University\Winter 2025\CSI - 3370\Echos of the Colosseum\room_descriptions"
     filename = os.path.join(base_path, f"room {room_number}.txt")
@@ -217,6 +225,7 @@ def load_room_description(room_number):
     else:
         return "This room feels... strange."
 
+# Spawning mechanism
 def combatspawn():
     enemies = [
         Enemy_NPC(name="Goblin", health=50, attack_stat=8, defend_stat=3, speed_stat=6),
@@ -276,8 +285,6 @@ class StartMenu:
         print("---------------------------------")
         speak("Choose a menu option:")
         speak("1. New Game")
-        speak("2. Load Game")
-        speak("3. Settings")
         speak("4. Exit")
         print()
         user_selection = input("Choose an option: ")
@@ -297,6 +304,9 @@ class StartMenu:
 
     def new_game(self):
         speak("Starting new game...")
+        intro_path = r"C:/Users/brown/OneDrive/Documents/Education/Oakland University/Winter 2025/CSI - 3370/Echos of the Colosseum/intro.txt"
+        intro_text = load_text_file(intro_path)
+        speak(intro_text)
         play_music("C:/Users/brown/OneDrive/Documents/Education/Oakland University/Winter 2025/CSI - 3370/Echos of the Colosseum/Music/main_music.mp3")
         pygame.mixer.music.set_volume(0.4)
         time.sleep(1)
@@ -367,13 +377,15 @@ class StartMenu:
 
                 else:
                     speak("Action cancelled.")
-            else:
-                print("Invalid input.")
 
             speak(f"Area {area_index + 1} cleared!")
             time.sleep(1)
 
         speak("All areas cleared! You survived Echoes of the Colosseum!")
+        outro_path = r"C:/Users/brown/OneDrive/Documents/Education/Oakland University/Winter 2025/CSI - 3370/Echos of the Colosseum/outro.txt"
+        outro_text = load_text_file(outro_path)
+        speak(outro_text)
+
         self.menus.game.play()
 
 class SettingsMenu:
