@@ -11,3 +11,6 @@ In order for the game to run smoothly:
 - Adjust line 334 to display the file path where you downloaded the music files for the game.
 - Adjust line 345 to display the file path where you downloaded the music files for the game.
 - Adjust line 385 to display the file path where you downloaded the outro file for the game.
+
+Additional notes:
+- There is a cheat in the game. During battle, use the hidden option 9 to deal 999 damage. This allows you to one hit every enemy and move through the game quickly.
